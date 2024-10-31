@@ -84,7 +84,7 @@ class Interpreter(InterpreterBase):
                 self.error(ErrorType.NAME_ERROR, f"Variable {var_name} has not been defined")
             return self.variable_name_to_value[var_name]
         #Else if the expression is an addition or subtraction attempt to find the value of the operation
-        elif expression.elem_type in ["+", "-"]:
+        elif expression.elem_type in ["+", "-", "*","/","==","!=","<=",">=",">","<","||","&&","!"]:
             op1 = self.evaluate_expression(expression.get("op1"))
             op2 = self.evaluate_expression(expression.get("op2"))
             #If both numbers aren't ints error
@@ -93,14 +93,48 @@ class Interpreter(InterpreterBase):
                     return op1 + op2
                 elif expression.elem_type == "-":
                     return op1 - op2
+                elif expression.elem_type == "*":
+                    return op1 * op2
+                elif expression.elem_type == "/":
+                    return op1//op2
+                elif expression.elem_type == "==":
+                    return op1 == op2
+                elif expression.elem_type == "!=":
+                    return op1 != op2
+                elif expression.elem_type == "<=":
+                    return op1 <= op2
+                elif expression.elem_type == ">=":
+                    return op1 >= op2
+                elif expression.elem_type == ">":
+                    return op1 > op2
+                elif expression.elem_type == "<":
+                    return op1 < op2
+                else:
+                    self.error(ErrorType.NAME_ERROR, f"Operation {expression.elem_type} is not defined for these types")
+            elif type(op1) == type(op2) == str:
+                if expression.elem_type == "+":
+                    return op1 + op2
+                elif expression.elem_type == "!=":
+                    return op1 != op2
+                elif expression.elem_type == "==":
+                    return op1 == op2
+            elif type(op1) == type(op2) == bool:
+                if expression.elem_type == "==":
+                    return op1 == op2
+                elif expression.elem_type == "!=":
+                    return op1 != op2
+                elif expression.elem_type == "&&":
+                    return op1 & op2
+                elif expression.elem_type == "||":
+                    return op1 | op2
+            elif type(op1) != type(op2):
+                if expression.elem_type == "==":
+                    return False
+                elif expression.elem_type == "!=":
+                    return True
             else:
                 self.error(ErrorType.TYPE_ERROR, "Incompatible types for specified operations")
-        #Else if the expression is a function call run it
-        elif expression.elem_type == "fcall":
-            return self.run_fcall(expression)
-        #Else error
-        else:
-            self.error(ErrorType.TYPE_ERROR, f"{expression.elem_type} is an unsupported expression type")
+
     
     def run_fcall(self, statement):
         func_name = statement.get("name")
