@@ -77,6 +77,10 @@ class Interpreter(InterpreterBase):
             return expression.get("val")
         elif expression.elem_type == "string":
             return expression.get("val")
+        elif expression.elem_type == "bool":
+            return expression.get("val")
+        elif expression.elem_type == "nil":
+            return expression.get("val")
         #Else if the expression is another variable attempt to return the value of that variable
         elif expression.elem_type == "var":
             var_name = expression.get("name")
