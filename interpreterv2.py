@@ -6,13 +6,15 @@ class Interpreter(InterpreterBase):
         super().__init__(console_output, inp)
         #Intialize dictionary to contain variables and their values
         self.variable_name_to_value={}
+        #Intialized dictionary to contain functions definitions and possible function overloads
+        self.func_defs = {}
 
     def run(self,program):
 
         #Use the parser to get the AST
         ast=parse_program(program)
 
-        #USe recurssion to traverse ast
+        #Use recurssion to traverse ast
         functions=ast.get("functions")
 
         main_function=None
@@ -22,13 +24,30 @@ class Interpreter(InterpreterBase):
             #Make sure that there is a  main function 
             if func_name == "main":
                     main_function = function
-                    break
+            else:
+                self.define_func(function)
         #If there is no main function Error
         if not main_function:
             self.error(ErrorType.NAME_ERROR, "No main() function was found")
 
         #Execute main
         self.run_func(main_function)
+
+    def define_func(self,function):
+        func_name = function.get("name")
+        params = function.get("args")
+        num_params = len(params)
+
+        #Check if this function with this number of parameters has already been defined
+        if (func_name,num_params) in self.func_defs:
+            self.error(ErrorType.NAME_ERROR, f"Function {func_name} with {num_params} parameter(s) has already been defined")
+        self.func_defs[(func_name,num_params)]=function
+    
+    def get_func(self,name, num_params):
+        if(name,num_params) in self.func_defs:
+            return self.func_defs[(name,num_params)]
+        else:
+            self.error(ErrorType.NAME_ERROR,f"Function {name} with {num_params} parameter(s) has not been defined")
     
 
     def run_func(self,function):
@@ -142,25 +161,29 @@ class Interpreter(InterpreterBase):
     
     def run_fcall(self, statement):
         func_name = statement.get("name")
+        args = statement.get("args")
         #If the function is a print function get the arguments in print and use output to print them
         if func_name == "print":
-            args = statement.get("args")
             output = ""
             for arg in args:
                 value = self.evaluate_expression(arg)
                 output += str(value)
             self.output(output)
-        #Next 8 lines were made with the help of ChatGPT 
+        #ChatGPT helped from here *** 
         # and it's suppossed to print the prompt (if there is one) and get user input
         elif func_name == "inputi":
-            args = statement.get("args")
             if len(args) > 1:
                 self.error(ErrorType.NAME_ERROR, f"No inputi() function found that takes > 1 parameter")
             elif len(args) == 1:
                 prompt=self.evaluate_expression(args[0])
                 self.output(prompt)
             user_input = int(self.get_input())
+        # to here ***
             return user_input
+        #Check if the function is one of the previously defined function calls and run it
+        elif (func_name,len(args)) in self.func_defs:
+            func=self.get_func(func_name,len(args))
+            self.run_fcall(func)
         #If the function hasn't been defined error
         else:
             self.error(ErrorType.NAME_ERROR, f"Function {func_name} has not been defined")
