@@ -67,6 +67,8 @@ class Interpreter(InterpreterBase):
         #Else if the statement is a function call use the fcall_func
         elif statement.elem_type == "fcall":
             self.run_fcall(statement)
+        elif statement.elem_type == "return":
+            self.do_return(statement)
         #Else error because trying to run an unexpected statement
         else:
             self.error(ErrorType.TYPE_ERROR)
@@ -187,6 +189,11 @@ class Interpreter(InterpreterBase):
         #If the function hasn't been defined error
         else:
             self.error(ErrorType.NAME_ERROR, f"Function {func_name} has not been defined")
+
+    def do_return(self,statement):
+        return_statement = statement.get("expression")
+        return self.evaluate_expression(return_statement)
+
 
 
 
